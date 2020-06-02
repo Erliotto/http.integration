@@ -5,6 +5,7 @@ import com.erliotto.http.integration.gate.internal.TestOnlyRestController;
 import com.erliotto.http.integration.gate.internal.TestRestTemplateHttpResultProvider;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -55,9 +57,8 @@ class IntegrationPointTests {
         }
     }
 
-
     @Test
-    void call_whenGetString_thenReturnExpectedStatusAndData() {
+    void call_whenGetString_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
         final class StringResponse extends DefaultHttpStatusHolder {
             public final String answer;
@@ -88,7 +89,7 @@ class IntegrationPointTests {
     }
 
     @Test
-    void call_whenGetStringArray_thenReturnExpectedStatusAndData() {
+    void call_whenGetStringArray_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
         final class StringArray extends DefaultHttpStatusHolder {
             public final String[] data;
@@ -119,7 +120,7 @@ class IntegrationPointTests {
     }
 
     @Test
-    void call_whenGetJson_thenReturnExpectedStatusAndData() {
+    void call_whenGetJson_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
         final IntegrationPoint<TestOnlyRestController.ReturnTypes.Json> integrationPoint =
                 new IntegrationPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
@@ -145,7 +146,7 @@ class IntegrationPointTests {
     }
 
     @Test
-    void call_whenGetJsonUnexpectedFieldsAndDefaultObjectMapper_thenReturnNull() {
+    void call_whenGetJsonUnexpectedFieldsAndDefaultObjectMapper_thenThrowJsonProcessingException() {
         // arrange
         final ObjectMapper mapper = new ObjectMapper();
 
@@ -156,15 +157,12 @@ class IntegrationPointTests {
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        final JsonUnexpected json = integrationPoint.call(HttpMethod.GET, url, null, null);
-
-        // assert
-        assertThat(json)
-                .isNull();
+        assertThatThrownBy(() -> integrationPoint.call(HttpMethod.GET, url, null, null))
+                .isInstanceOf(JsonProcessingException.class);
     }
 
     @Test
-    void call_whenGetJsonUnexpectedFieldsAndSpecialObjectMapper_thenReturnExpectedStatusAndData() {
+    void call_whenGetJsonUnexpectedFieldsAndSpecialObjectMapper_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
         final ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -188,4 +186,73 @@ class IntegrationPointTests {
         assertThat(json.name)
                 .isEqualTo("json name");
     }
+
+    @Test
+    void call_whenCallUnknownUrl_thenReturnNull() throws JsonProcessingException {
+        final class StringResponse extends DefaultHttpStatusHolder {
+            public final String answer;
+
+            public StringResponse(String rawResponse) {
+                this.answer = rawResponse;
+            }
+        }
+        // arrange
+        final IntegrationPoint<StringResponse> integrationPoint =
+                new IntegrationPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
+                        .register(HttpStatus.OK, StringResponse.class);
+
+        final String url = String.format("http://localhost:%d/unknownUrl", port);
+
+        // act
+        final StringResponse stringResponse = integrationPoint.call(HttpMethod.GET, url, null, null);
+
+        // assert
+        assertThat(stringResponse)
+                .isNull();
+    }
+
+    @Test
+    void call_whenCallUnknownUrlAndRegisterDefault_thenReturn404Status() throws JsonProcessingException {
+        abstract class BaseResponse extends DefaultHttpStatusHolder {
+            public final String answer;
+
+            public BaseResponse(String rawResponse) {
+                this.answer = rawResponse;
+            }
+        }
+
+        final class StringResponse extends BaseResponse {
+            public StringResponse(String rawResponse) {
+                super(rawResponse);
+            }
+        }
+
+        final class UnknownResponse extends BaseResponse {
+            public UnknownResponse(String rawResponse) {
+                super(rawResponse);
+            }
+        }
+
+        // arrange
+        final IntegrationPoint<BaseResponse> integrationPoint =
+                new IntegrationPoint<BaseResponse>(createHttpResultProvider(), new ObjectMapper())
+                        .register(HttpStatus.OK, StringResponse.class)
+                        .registerDefault(String.class, rawResponse -> new UnknownResponse(rawResponse));
+
+        final String url = String.format("http://localhost:%d/unknownUrl", port);
+
+        // act
+        final BaseResponse baseResponse = integrationPoint.call(HttpMethod.GET, url, null, null);
+
+        // assert
+        assertThat(baseResponse)
+                .isNotNull();
+
+        assertThat(baseResponse.getHttpStatus())
+                .isEqualTo(HttpStatus.NOT_FOUND);
+
+        assertThat(baseResponse)
+                .isInstanceOf(UnknownResponse.class);
+    }
+
 }

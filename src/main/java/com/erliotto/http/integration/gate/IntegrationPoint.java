@@ -1,5 +1,6 @@
 package com.erliotto.http.integration.gate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -22,18 +23,13 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
         this.responseDescriptors = new HashMap<>();
     }
 
-    public TResponse call(HttpMethod httpMethod, String url, HttpHeaders httpHeaders, Object payload) {
-        try {
-            final HttpResultProvider.Result httpResult = httpResultProvider.call(httpMethod, url, httpHeaders, payload);
-
-            if (httpResult == null) {
-                return null;
-            }
-
-            return dispatchResponse(httpResult.httpStatus, httpResult.body);
-        } catch (Exception e) {
+    public TResponse call(HttpMethod httpMethod, String url, HttpHeaders httpHeaders, Object payload) throws JsonProcessingException {
+        final HttpResultProvider.Result httpResult = httpResultProvider.call(httpMethod, url, httpHeaders, payload);
+        if (httpResult == null) {
             return null;
         }
+
+        return dispatchResponse(httpResult.httpStatus, httpResult.body);
     }
 
     public IntegrationPoint<TResponse> register(HttpStatus httpStatus, Class<? extends TResponse> responseClass) {
@@ -107,7 +103,7 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
         return new Value(rawResponseClass, x -> responseMapper.apply((TRawResponse) x));
     }
 
-    private TResponse dispatchResponse(HttpStatus key, String rawResponse) {
+    private TResponse dispatchResponse(HttpStatus key, String rawResponse) throws JsonProcessingException {
         final Value value = this.responseDescriptors.get(key);
 
         if (value != null) {
@@ -121,22 +117,17 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
         return null;
     }
 
-    private TResponse acceptResponse(HttpStatus key, Value value, String rawResponse) {
-        try {
-            final Object rawResponseValue = value.rawResponseClass != String.class
-                    ? objectMapper.readValue(rawResponse, value.rawResponseClass)
-                    : rawResponse;
+    private TResponse acceptResponse(HttpStatus key, Value value, String rawResponse) throws JsonProcessingException {
+        final Object rawResponseValue = value.rawResponseClass != String.class
+                ? objectMapper.readValue(rawResponse, value.rawResponseClass)
+                : rawResponse;
 
-            final TResponse externalServiceResponse = value.responseMapper == null
-                    ? (TResponse) rawResponseValue
-                    : (TResponse) value.responseMapper.apply(rawResponseValue);
+        final TResponse externalServiceResponse = value.responseMapper == null
+                ? (TResponse) rawResponseValue
+                : (TResponse) value.responseMapper.apply(rawResponseValue);
 
-
-            externalServiceResponse.setHttpStatus(key);
-            return externalServiceResponse;
-        } catch (Exception e) {
-            return null;
-        }
+        externalServiceResponse.setHttpStatus(key);
+        return externalServiceResponse;
     }
 
     private static class Value {
