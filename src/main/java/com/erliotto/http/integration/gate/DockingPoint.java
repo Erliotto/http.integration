@@ -10,20 +10,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class SeamPoint<TResponse extends HttpStatusHolder> {
+public final class DockingPoint<TResponse extends HttpStatusHolder> {
     private final HttpResultProvider httpResultProvider;
     private final ObjectMapper objectMapper;
     private final Map<HttpStatus, Value> responseDescriptors;
 
     private Value defaultValue;
 
-    public SeamPoint(HttpResultProvider httpResultProvider, ObjectMapper objectMapper) {
+    public DockingPoint(HttpResultProvider httpResultProvider, ObjectMapper objectMapper) {
         this.httpResultProvider = httpResultProvider;
         this.objectMapper = objectMapper;
         this.responseDescriptors = new HashMap<>();
     }
 
-    public SeamPoint<TResponse> register(HttpStatus httpStatus, Class<? extends TResponse> responseClass) {
+    public DockingPoint<TResponse> register(HttpStatus httpStatus, Class<? extends TResponse> responseClass) {
         check(responseClass);
         checkHttpStatus(httpStatus);
 
@@ -31,9 +31,9 @@ public final class SeamPoint<TResponse extends HttpStatusHolder> {
         return this;
     }
 
-    public <TRawResponse> SeamPoint<TResponse> register(HttpStatus httpStatus,
-                                                        Class<TRawResponse> rawResponseClass,
-                                                        Function<TRawResponse, TResponse> responseMapper) {
+    public <TRawResponse> DockingPoint<TResponse> register(HttpStatus httpStatus,
+                                                           Class<TRawResponse> rawResponseClass,
+                                                           Function<TRawResponse, TResponse> responseMapper) {
         check(rawResponseClass, responseMapper);
         checkHttpStatus(httpStatus);
 
@@ -41,7 +41,7 @@ public final class SeamPoint<TResponse extends HttpStatusHolder> {
         return this;
     }
 
-    public SeamPoint<TResponse> registerDefault(Class<? extends TResponse> responseClass) {
+    public DockingPoint<TResponse> registerDefault(Class<? extends TResponse> responseClass) {
         check(responseClass);
         checkDefault();
 
@@ -49,8 +49,8 @@ public final class SeamPoint<TResponse extends HttpStatusHolder> {
         return this;
     }
 
-    public <TRawResponse> SeamPoint<TResponse> registerDefault(Class<TRawResponse> rawResponseClass,
-                                                               Function<TRawResponse, TResponse> responseMapper) {
+    public <TRawResponse> DockingPoint<TResponse> registerDefault(Class<TRawResponse> rawResponseClass,
+                                                                  Function<TRawResponse, TResponse> responseMapper) {
         check(rawResponseClass, responseMapper);
         checkDefault();
 
@@ -130,15 +130,15 @@ public final class SeamPoint<TResponse extends HttpStatusHolder> {
     }
 
     private static class Value {
-        private final Class<?> rawResponseClass;
+        private final Class rawResponseClass;
         private final Function<Object, ?> rawResponseMapper;
 
-        private Value(Class<?> rawResponseClass) {
+        private Value(Class rawResponseClass) {
             this.rawResponseClass = rawResponseClass;
             this.rawResponseMapper = null;
         }
 
-        private Value(Class<?> rawResponseClass, Function<Object, ?> rawResponseMapper) {
+        private Value(Class rawResponseClass, Function<Object, ?> rawResponseMapper) {
             this.rawResponseClass = rawResponseClass;
             this.rawResponseMapper = rawResponseMapper;
         }

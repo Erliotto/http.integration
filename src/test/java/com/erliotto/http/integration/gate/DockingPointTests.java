@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-public class SeamPointTests {
+public class DockingPointTests {
     @MockBean
     RestTemplate mockRestTemplate;
 
@@ -34,7 +34,7 @@ public class SeamPointTests {
         objectMapper = new ObjectMapper();
     }
 
-    private HttpStatusHolder act(SeamPoint seamPoint, Consumer<OngoingStubbing<ResponseEntity>> whenConsumer) throws JsonProcessingException {
+    private HttpStatusHolder act(DockingPoint dockingPoint, Consumer<OngoingStubbing<ResponseEntity>> whenConsumer) throws JsonProcessingException {
         final String url = "some url";
         final HttpHeaders httpHeaders = null;
         final Object payload = null;
@@ -56,11 +56,11 @@ public class SeamPointTests {
         }
 
         // run interaction..
-        return seamPoint.call(HttpMethod.GET, url, httpHeaders, payload);
+        return dockingPoint.call(HttpMethod.GET, url, httpHeaders, payload);
     }
 
-    private HttpStatusHolder actWithResponse(SeamPoint seamPoint, ResponseEntity<String> responseEntity) throws JsonProcessingException {
-        return act(seamPoint, when -> when.thenReturn(responseEntity));
+    private HttpStatusHolder actWithResponse(DockingPoint dockingPoint, ResponseEntity<String> responseEntity) throws JsonProcessingException {
+        return act(dockingPoint, when -> when.thenReturn(responseEntity));
     }
 
     private ResponseEntity<String> createResponseEntity(HttpStatus status, Object stubResponse) {
@@ -105,11 +105,11 @@ public class SeamPointTests {
         final HttpStatus httpStatus = HttpStatus.OK;
         final ReturnTypes.OkResponse expectedResponse = new ReturnTypes.OkResponse("id value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .register(httpStatus, expectedResponse.getClass());
 
         // act
-        assertThatThrownBy(() -> seamPoint.register(httpStatus, expectedResponse.getClass()))
+        assertThatThrownBy(() -> dockingPoint.register(httpStatus, expectedResponse.getClass()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already have status");
     }
@@ -117,10 +117,10 @@ public class SeamPointTests {
     @Test
     void call_whenHttpResultIsNull_shouldReturnNull() throws JsonProcessingException {
         // arrange
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper);
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper);
 
         // act
-        final HttpStatusHolder actual = act(seamPoint, null);
+        final HttpStatusHolder actual = act(dockingPoint, null);
 
         // assert
         assertThat(actual)
@@ -133,11 +133,11 @@ public class SeamPointTests {
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
         final ReturnTypes.OkResponse expectedResponse = new ReturnTypes.OkResponse("id value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .register(expectedResponseStatus, expectedResponse.getClass());
 
         // act
-        final HttpStatusHolder actual = act(seamPoint, when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse)));
+        final HttpStatusHolder actual = act(dockingPoint, when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse)));
 
         // assert
         assertThat(actual)
@@ -159,11 +159,11 @@ public class SeamPointTests {
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
         final ReturnTypes.OkResponse expectedResponse = new ReturnTypes.OkResponse("id value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .register(expectedResponseStatus, expectedResponse.getClass());
 
         // act
-        final HttpStatusHolder actual = act(seamPoint,
+        final HttpStatusHolder actual = act(dockingPoint,
                 when -> when.thenReturn(createResponseEntity(HttpStatus.ALREADY_REPORTED, expectedResponse)));
 
         // assert
@@ -177,11 +177,11 @@ public class SeamPointTests {
         final HttpStatus defaultStatus = HttpStatus.ALREADY_REPORTED;
         final ReturnTypes.UnexpectedResponse defaultResponse = new ReturnTypes.UnexpectedResponse("value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .registerDefault(defaultResponse.getClass());
 
         // act
-        final HttpStatusHolder actual = act(seamPoint,
+        final HttpStatusHolder actual = act(dockingPoint,
                 when -> when.thenReturn(createResponseEntity(defaultStatus, defaultResponse)));
 
         // assert
@@ -204,14 +204,14 @@ public class SeamPointTests {
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
         final ReturnTypes.OkResponse expectedResponse = new ReturnTypes.OkResponse("id value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .register(expectedResponseStatus, expectedResponse.getClass());
 
         final ReturnTypes.UnexpectedResponse unexpectedResponse = new ReturnTypes.UnexpectedResponse("value");
 
         // act
         assertThatThrownBy(() ->
-                act(seamPoint, when -> when.thenReturn(createResponseEntity(expectedResponseStatus, unexpectedResponse))))
+                act(dockingPoint, when -> when.thenReturn(createResponseEntity(expectedResponseStatus, unexpectedResponse))))
                 .isInstanceOf(JsonProcessingException.class);
     }
 
@@ -221,12 +221,12 @@ public class SeamPointTests {
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
         final ReturnTypes.OkResponse expectedResponse = new ReturnTypes.OkResponse("id value");
 
-        final SeamPoint seamPoint = new SeamPoint(createHttpResultProvider(), objectMapper)
+        final DockingPoint dockingPoint = new DockingPoint(createHttpResultProvider(), objectMapper)
                 .register(expectedResponseStatus, expectedResponse.getClass())
                 .registerDefault(ReturnTypes.UnexpectedResponse.class);
 
         // act
-        final HttpStatusHolder actual = act(seamPoint,
+        final HttpStatusHolder actual = act(dockingPoint,
                 when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse)));
 
         // assert
@@ -257,10 +257,10 @@ public class SeamPointTests {
         final String[] expectedResponse = new String[]{"data 1", "data 2"};
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
 
-        final SeamPoint<?> seamPoint = new SeamPoint<>(createHttpResultProvider(), objectMapper)
+        final DockingPoint<?> dockingPoint = new DockingPoint<>(createHttpResultProvider(), objectMapper)
                 .register(expectedResponseStatus, String[].class, ResponseFromStringArray::new);
         // act
-        final HttpStatusHolder actual = act(seamPoint,
+        final HttpStatusHolder actual = act(dockingPoint,
                 when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse)));
 
         // assert
@@ -291,10 +291,11 @@ public class SeamPointTests {
         final String[] expectedResponse = new String[]{"data 1", "data 2"};
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
 
-        final SeamPoint<?> seamPoint = new SeamPoint<>(createHttpResultProvider(), objectMapper)
+        final DockingPoint<?> dockingPoint = new DockingPoint<>(createHttpResultProvider(), objectMapper)
                 .registerDefault(String[].class, ResponseFromStringArray::new);
+
         // act
-        final HttpStatusHolder actual = act(seamPoint,
+        final HttpStatusHolder actual = act(dockingPoint,
                 when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse)));
 
         // assert
@@ -309,6 +310,26 @@ public class SeamPointTests {
 
         assertThat(((ResponseFromStringArray) actual).data)
                 .isEqualTo(expectedResponse);
+    }
+
+    @Test
+    void call_whenRegisterDefaultResponseMapperAndNotExpectedContentType_shouldThrowJsonProcessingException()  {
+        final class ResponseFromInt extends DefaultHttpStatusHolder {
+            ResponseFromInt(int data) {
+            }
+        }
+
+        // arrange
+        final String[] expectedResponse = new String[]{"data 1", "data 2"};
+        final HttpStatus expectedResponseStatus = HttpStatus.OK;
+
+        final DockingPoint<?> dockingPoint = new DockingPoint<>(createHttpResultProvider(), objectMapper)
+                .registerDefault(int.class, ResponseFromInt::new);
+
+        // act
+        assertThatThrownBy(() ->
+                act(dockingPoint, when -> when.thenReturn(createResponseEntity(expectedResponseStatus, expectedResponse))))
+                .isInstanceOf(JsonProcessingException.class);
     }
 
 }

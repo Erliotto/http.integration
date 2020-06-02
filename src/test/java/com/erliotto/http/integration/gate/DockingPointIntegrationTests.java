@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
                 Application.class,
                 TestOnlyRestController.class
         })
-class SeamPointIntegrationTests {
+class DockingPointIntegrationTests {
     @LocalServerPort
     private int port;
 
@@ -68,14 +68,14 @@ class SeamPointIntegrationTests {
             }
         }
 
-        final SeamPoint<StringResponse> seamPoint =
-                new SeamPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
+        final DockingPoint<StringResponse> dockingPoint =
+                new DockingPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String.class, rawResponse -> new StringResponse(rawResponse));
 
         final String url = String.format("http://localhost:%d/getString", port);
 
         // act
-        final StringResponse stringResponse = seamPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringResponse)
@@ -99,14 +99,14 @@ class SeamPointIntegrationTests {
             }
         }
 
-        final SeamPoint<StringArray> seamPoint =
-                new SeamPoint<StringArray>(createHttpResultProvider(), new ObjectMapper())
+        final DockingPoint<StringArray> dockingPoint =
+                new DockingPoint<StringArray>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String[].class, rawResponse -> new StringArray(rawResponse));
 
         final String url = String.format("http://localhost:%d/getStringArray", port);
 
         // act
-        final StringArray stringArray = seamPoint.call(HttpMethod.GET, url, null, null);
+        final StringArray stringArray = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringArray)
@@ -122,14 +122,14 @@ class SeamPointIntegrationTests {
     @Test
     void call_whenGetJson_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
-        final SeamPoint<TestOnlyRestController.ReturnTypes.Json> seamPoint =
-                new SeamPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
+        final DockingPoint<TestOnlyRestController.ReturnTypes.Json> dockingPoint =
+                new DockingPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, TestOnlyRestController.ReturnTypes.Json.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        final TestOnlyRestController.ReturnTypes.Json json = seamPoint.call(HttpMethod.GET, url, null, null);
+        final TestOnlyRestController.ReturnTypes.Json json = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(json)
@@ -150,14 +150,14 @@ class SeamPointIntegrationTests {
         // arrange
         final ObjectMapper mapper = new ObjectMapper();
 
-        final SeamPoint<JsonUnexpected> seamPoint =
-                new SeamPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
+        final DockingPoint<JsonUnexpected> dockingPoint =
+                new DockingPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        assertThatThrownBy(() -> seamPoint.call(HttpMethod.GET, url, null, null))
+        assertThatThrownBy(() -> dockingPoint.call(HttpMethod.GET, url, null, null))
                 .isInstanceOf(JsonProcessingException.class);
     }
 
@@ -167,14 +167,14 @@ class SeamPointIntegrationTests {
         final ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        final SeamPoint<JsonUnexpected> seamPoint =
-                new SeamPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
+        final DockingPoint<JsonUnexpected> dockingPoint =
+                new DockingPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        final JsonUnexpected json = seamPoint.call(HttpMethod.GET, url, null, null);
+        final JsonUnexpected json = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(json)
@@ -197,14 +197,14 @@ class SeamPointIntegrationTests {
             }
         }
         // arrange
-        final SeamPoint<StringResponse> seamPoint =
-                new SeamPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
+        final DockingPoint<StringResponse> dockingPoint =
+                new DockingPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, StringResponse.class);
 
         final String url = String.format("http://localhost:%d/unknownUrl", port);
 
         // act
-        final StringResponse stringResponse = seamPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringResponse)
@@ -234,15 +234,15 @@ class SeamPointIntegrationTests {
         }
 
         // arrange
-        final SeamPoint<BaseResponse> seamPoint =
-                new SeamPoint<BaseResponse>(createHttpResultProvider(), new ObjectMapper())
+        final DockingPoint<BaseResponse> dockingPoint =
+                new DockingPoint<BaseResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, StringResponse.class)
                         .registerDefault(String.class, rawResponse -> new UnknownResponse(rawResponse));
 
         final String url = String.format("http://localhost:%d/unknownUrl", port);
 
         // act
-        final BaseResponse baseResponse = seamPoint.call(HttpMethod.GET, url, null, null);
+        final BaseResponse baseResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(baseResponse)
