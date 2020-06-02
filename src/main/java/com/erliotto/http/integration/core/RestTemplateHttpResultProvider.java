@@ -1,4 +1,4 @@
-package com.erliotto.http.integration.gate;
+package com.erliotto.http.integration.core;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

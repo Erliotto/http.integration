@@ -1,4 +1,4 @@
-package com.erliotto.http.integration.gate;
+package com.erliotto.http.integration.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.http.HttpStatus;

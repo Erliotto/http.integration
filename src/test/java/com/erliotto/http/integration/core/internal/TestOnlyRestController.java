@@ -1,6 +1,6 @@
-package com.erliotto.http.integration.gate.internal;
+package com.erliotto.http.integration.core.internal;
 
-import com.erliotto.http.integration.gate.DefaultHttpStatusHolder;
+import com.erliotto.http.integration.core.DefaultHttpStatusHolder;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.http.MediaType;

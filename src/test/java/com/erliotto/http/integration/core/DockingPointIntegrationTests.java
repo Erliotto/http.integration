@@ -1,8 +1,8 @@
-package com.erliotto.http.integration.gate;
+package com.erliotto.http.integration.core;
 
 import com.erliotto.http.integration.Application;
-import com.erliotto.http.integration.gate.internal.TestOnlyRestController;
-import com.erliotto.http.integration.gate.internal.TestRestTemplateHttpResultProvider;
+import com.erliotto.http.integration.core.internal.TestOnlyRestController;
+import com.erliotto.http.integration.core.internal.TestRestTemplateHttpResultProvider;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,6 +57,10 @@ class DockingPointIntegrationTests {
         }
     }
 
+    private String createUrl(String path) {
+        return String.format("http://localhost:%d/%s", port, path);
+    }
+
     @Test
     void call_whenGetString_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
@@ -72,10 +76,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String.class, rawResponse -> new StringResponse(rawResponse));
 
-        final String url = String.format("http://localhost:%d/getString", port);
-
         // act
-        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, createUrl("getString"), null, null);
 
         // assert
         assertThat(stringResponse)
@@ -103,10 +105,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<StringArray>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String[].class, rawResponse -> new StringArray(rawResponse));
 
-        final String url = String.format("http://localhost:%d/getStringArray", port);
-
         // act
-        final StringArray stringArray = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final StringArray stringArray = dockingPoint.call(HttpMethod.GET, createUrl("getStringArray"), null, null);
 
         // assert
         assertThat(stringArray)
@@ -126,10 +126,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, TestOnlyRestController.ReturnTypes.Json.class);
 
-        final String url = String.format("http://localhost:%d/getJson", port);
-
         // act
-        final TestOnlyRestController.ReturnTypes.Json json = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final TestOnlyRestController.ReturnTypes.Json json = dockingPoint.call(HttpMethod.GET, createUrl("getJson"), null, null);
 
         // assert
         assertThat(json)
@@ -154,10 +152,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
-        final String url = String.format("http://localhost:%d/getJson", port);
-
         // act
-        assertThatThrownBy(() -> dockingPoint.call(HttpMethod.GET, url, null, null))
+        assertThatThrownBy(() -> dockingPoint.call(HttpMethod.GET, createUrl("getJson"), null, null))
                 .isInstanceOf(JsonProcessingException.class);
     }
 
@@ -171,10 +167,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
-        final String url = String.format("http://localhost:%d/getJson", port);
-
         // act
-        final JsonUnexpected json = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final JsonUnexpected json = dockingPoint.call(HttpMethod.GET, createUrl("getJson"), null, null);
 
         // assert
         assertThat(json)
@@ -201,10 +195,8 @@ class DockingPointIntegrationTests {
                 new DockingPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, StringResponse.class);
 
-        final String url = String.format("http://localhost:%d/unknownUrl", port);
-
         // act
-        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = dockingPoint.call(HttpMethod.GET, createUrl("unknownUrl"), null, null);
 
         // assert
         assertThat(stringResponse)
@@ -239,10 +231,8 @@ class DockingPointIntegrationTests {
                         .register(HttpStatus.OK, StringResponse.class)
                         .registerDefault(String.class, rawResponse -> new UnknownResponse(rawResponse));
 
-        final String url = String.format("http://localhost:%d/unknownUrl", port);
-
         // act
-        final BaseResponse baseResponse = dockingPoint.call(HttpMethod.GET, url, null, null);
+        final BaseResponse baseResponse = dockingPoint.call(HttpMethod.GET, createUrl("unknownUrl"), null, null);
 
         // assert
         assertThat(baseResponse)

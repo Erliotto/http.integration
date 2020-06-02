@@ -1,6 +1,6 @@
-package com.erliotto.http.integration.gate.internal;
+package com.erliotto.http.integration.core.internal;
 
-import com.erliotto.http.integration.gate.HttpResultProvider;
+import com.erliotto.http.integration.core.HttpResultProvider;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
