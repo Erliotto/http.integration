@@ -18,11 +18,13 @@ public final class RestTemplateHttpResultProvider implements HttpResultProvider 
     public Result call(HttpMethod httpMethod, String url, HttpHeaders httpHeaders, Object payload) {
         try {
             final ResponseEntity<String> responseEntity = restTemplate.exchange(url, httpMethod, new HttpEntity(payload, httpHeaders), String.class);
+            if (responseEntity == null) {
+                return null;
+            }
+
             return new HttpResultProvider.Result(responseEntity.getStatusCode(), responseEntity.getBody());
         } catch (HttpStatusCodeException e) {
             return new HttpResultProvider.Result(e.getStatusCode(), e.getResponseBodyAsString());
-        } catch (Exception e) {
-            return null;
         }
     }
 }

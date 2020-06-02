@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
                 Application.class,
                 TestOnlyRestController.class
         })
-class IntegrationPointTests {
+class SeamPointIntegrationTests {
     @LocalServerPort
     private int port;
 
@@ -68,14 +68,14 @@ class IntegrationPointTests {
             }
         }
 
-        final IntegrationPoint<StringResponse> integrationPoint =
-                new IntegrationPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
+        final SeamPoint<StringResponse> seamPoint =
+                new SeamPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String.class, rawResponse -> new StringResponse(rawResponse));
 
         final String url = String.format("http://localhost:%d/getString", port);
 
         // act
-        final StringResponse stringResponse = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringResponse)
@@ -99,14 +99,14 @@ class IntegrationPointTests {
             }
         }
 
-        final IntegrationPoint<StringArray> integrationPoint =
-                new IntegrationPoint<StringArray>(createHttpResultProvider(), new ObjectMapper())
+        final SeamPoint<StringArray> seamPoint =
+                new SeamPoint<StringArray>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, String[].class, rawResponse -> new StringArray(rawResponse));
 
         final String url = String.format("http://localhost:%d/getStringArray", port);
 
         // act
-        final StringArray stringArray = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final StringArray stringArray = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringArray)
@@ -122,14 +122,14 @@ class IntegrationPointTests {
     @Test
     void call_whenGetJson_thenReturnExpectedStatusAndData() throws JsonProcessingException {
         // arrange
-        final IntegrationPoint<TestOnlyRestController.ReturnTypes.Json> integrationPoint =
-                new IntegrationPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
+        final SeamPoint<TestOnlyRestController.ReturnTypes.Json> seamPoint =
+                new SeamPoint<TestOnlyRestController.ReturnTypes.Json>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, TestOnlyRestController.ReturnTypes.Json.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        final TestOnlyRestController.ReturnTypes.Json json = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final TestOnlyRestController.ReturnTypes.Json json = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(json)
@@ -150,14 +150,14 @@ class IntegrationPointTests {
         // arrange
         final ObjectMapper mapper = new ObjectMapper();
 
-        final IntegrationPoint<JsonUnexpected> integrationPoint =
-                new IntegrationPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
+        final SeamPoint<JsonUnexpected> seamPoint =
+                new SeamPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        assertThatThrownBy(() -> integrationPoint.call(HttpMethod.GET, url, null, null))
+        assertThatThrownBy(() -> seamPoint.call(HttpMethod.GET, url, null, null))
                 .isInstanceOf(JsonProcessingException.class);
     }
 
@@ -167,14 +167,14 @@ class IntegrationPointTests {
         final ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        final IntegrationPoint<JsonUnexpected> integrationPoint =
-                new IntegrationPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
+        final SeamPoint<JsonUnexpected> seamPoint =
+                new SeamPoint<JsonUnexpected>(createHttpResultProvider(), mapper)
                         .register(HttpStatus.OK, JsonUnexpected.class);
 
         final String url = String.format("http://localhost:%d/getJson", port);
 
         // act
-        final JsonUnexpected json = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final JsonUnexpected json = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(json)
@@ -197,14 +197,14 @@ class IntegrationPointTests {
             }
         }
         // arrange
-        final IntegrationPoint<StringResponse> integrationPoint =
-                new IntegrationPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
+        final SeamPoint<StringResponse> seamPoint =
+                new SeamPoint<StringResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, StringResponse.class);
 
         final String url = String.format("http://localhost:%d/unknownUrl", port);
 
         // act
-        final StringResponse stringResponse = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final StringResponse stringResponse = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(stringResponse)
@@ -234,15 +234,15 @@ class IntegrationPointTests {
         }
 
         // arrange
-        final IntegrationPoint<BaseResponse> integrationPoint =
-                new IntegrationPoint<BaseResponse>(createHttpResultProvider(), new ObjectMapper())
+        final SeamPoint<BaseResponse> seamPoint =
+                new SeamPoint<BaseResponse>(createHttpResultProvider(), new ObjectMapper())
                         .register(HttpStatus.OK, StringResponse.class)
                         .registerDefault(String.class, rawResponse -> new UnknownResponse(rawResponse));
 
         final String url = String.format("http://localhost:%d/unknownUrl", port);
 
         // act
-        final BaseResponse baseResponse = integrationPoint.call(HttpMethod.GET, url, null, null);
+        final BaseResponse baseResponse = seamPoint.call(HttpMethod.GET, url, null, null);
 
         // assert
         assertThat(baseResponse)

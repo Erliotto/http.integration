@@ -10,17 +10,52 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
+public final class SeamPoint<TResponse extends HttpStatusHolder> {
     private final HttpResultProvider httpResultProvider;
     private final ObjectMapper objectMapper;
     private final Map<HttpStatus, Value> responseDescriptors;
 
     private Value defaultValue;
 
-    public IntegrationPoint(HttpResultProvider httpResultProvider, ObjectMapper objectMapper) {
+    public SeamPoint(HttpResultProvider httpResultProvider, ObjectMapper objectMapper) {
         this.httpResultProvider = httpResultProvider;
         this.objectMapper = objectMapper;
         this.responseDescriptors = new HashMap<>();
+    }
+
+    public SeamPoint<TResponse> register(HttpStatus httpStatus, Class<? extends TResponse> responseClass) {
+        check(responseClass);
+        checkHttpStatus(httpStatus);
+
+        this.responseDescriptors.put(httpStatus, createValue(responseClass));
+        return this;
+    }
+
+    public <TRawResponse> SeamPoint<TResponse> register(HttpStatus httpStatus,
+                                                        Class<TRawResponse> rawResponseClass,
+                                                        Function<TRawResponse, TResponse> responseMapper) {
+        check(rawResponseClass, responseMapper);
+        checkHttpStatus(httpStatus);
+
+        this.responseDescriptors.put(httpStatus, createValue(rawResponseClass, responseMapper));
+        return this;
+    }
+
+    public SeamPoint<TResponse> registerDefault(Class<? extends TResponse> responseClass) {
+        check(responseClass);
+        checkDefault();
+
+        this.defaultValue = createValue(responseClass);
+        return this;
+    }
+
+    public <TRawResponse> SeamPoint<TResponse> registerDefault(Class<TRawResponse> rawResponseClass,
+                                                               Function<TRawResponse, TResponse> responseMapper) {
+        check(rawResponseClass, responseMapper);
+        checkDefault();
+
+        this.defaultValue = createValue(rawResponseClass, responseMapper);
+        return this;
     }
 
     public TResponse call(HttpMethod httpMethod, String url, HttpHeaders httpHeaders, Object payload) throws JsonProcessingException {
@@ -30,41 +65,6 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
         }
 
         return dispatchResponse(httpResult.httpStatus, httpResult.body);
-    }
-
-    public IntegrationPoint<TResponse> register(HttpStatus httpStatus, Class<? extends TResponse> responseClass) {
-        check(responseClass);
-        checkHttpStatus(httpStatus);
-
-        this.responseDescriptors.put(httpStatus, createValue(responseClass));
-        return this;
-    }
-
-    public <TRawResponse> IntegrationPoint<TResponse> register(HttpStatus httpStatus,
-                                                               Class<TRawResponse> rawResponseClass,
-                                                               Function<TRawResponse, TResponse> responseMapper) {
-        check(rawResponseClass, responseMapper);
-        checkHttpStatus(httpStatus);
-
-        this.responseDescriptors.put(httpStatus, createValue(rawResponseClass, responseMapper));
-        return this;
-    }
-
-    public IntegrationPoint<TResponse> registerDefault(Class<? extends TResponse> responseClass) {
-        check(responseClass);
-        checkDefault();
-
-        this.defaultValue = createValue(responseClass);
-        return this;
-    }
-
-    public <TRawResponse> IntegrationPoint<TResponse> registerDefault(Class<TRawResponse> rawResponseClass,
-                                                                      Function<TRawResponse, TResponse> responseMapper) {
-        check(rawResponseClass, responseMapper);
-        checkDefault();
-
-        this.defaultValue = createValue(rawResponseClass, responseMapper);
-        return this;
     }
 
     private void check(Class<? extends TResponse> responseClass) {
@@ -105,7 +105,6 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
 
     private TResponse dispatchResponse(HttpStatus key, String rawResponse) throws JsonProcessingException {
         final Value value = this.responseDescriptors.get(key);
-
         if (value != null) {
             return acceptResponse(key, value, rawResponse);
         }
@@ -122,9 +121,9 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
                 ? objectMapper.readValue(rawResponse, value.rawResponseClass)
                 : rawResponse;
 
-        final TResponse externalServiceResponse = value.responseMapper == null
+        final TResponse externalServiceResponse = value.rawResponseMapper == null
                 ? (TResponse) rawResponseValue
-                : (TResponse) value.responseMapper.apply(rawResponseValue);
+                : (TResponse) value.rawResponseMapper.apply(rawResponseValue);
 
         externalServiceResponse.setHttpStatus(key);
         return externalServiceResponse;
@@ -132,16 +131,16 @@ public final class IntegrationPoint<TResponse extends HttpStatusHolder> {
 
     private static class Value {
         private final Class<?> rawResponseClass;
-        private final Function<Object, ?> responseMapper;
+        private final Function<Object, ?> rawResponseMapper;
 
         private Value(Class<?> rawResponseClass) {
             this.rawResponseClass = rawResponseClass;
-            this.responseMapper = null;
+            this.rawResponseMapper = null;
         }
 
-        private Value(Class<?> rawResponseClass, Function<Object, ?> responseMapper) {
+        private Value(Class<?> rawResponseClass, Function<Object, ?> rawResponseMapper) {
             this.rawResponseClass = rawResponseClass;
-            this.responseMapper = responseMapper;
+            this.rawResponseMapper = rawResponseMapper;
         }
     }
 }
