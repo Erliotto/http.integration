@@ -29,6 +29,33 @@ public class DockingPointTests {
     @Mock
     ObjectMapper mockObjectMapper;
 
+    private final static class ReturnTypes {
+        public static final class OkResponse extends DefaultHttpStatusHolder {
+            @JsonProperty("Id")
+            public final String id;
+
+            @JsonCreator
+            public OkResponse(@JsonProperty("Id") String id) {
+                this.id = id;
+            }
+        }
+
+        public static final class UnexpectedResponse extends DefaultHttpStatusHolder {
+            @JsonProperty("Name")
+            public final String name;
+
+            @JsonCreator
+            public UnexpectedResponse(@JsonProperty("Name") String name) {
+                this.name = name;
+            }
+        }
+    }
+
+    private final static class ResponseFromInt extends DefaultHttpStatusHolder {
+        public ResponseFromInt(int data) {
+        }
+    }
+
     @BeforeEach
     void beforeEach() {
         objectMapper = new ObjectMapper();
@@ -75,28 +102,6 @@ public class DockingPointTests {
 
     private HttpResultProvider createHttpResultProvider() {
         return new RestTemplateHttpResultProvider(mockRestTemplate);
-    }
-
-    private static class ReturnTypes {
-        public static final class OkResponse extends DefaultHttpStatusHolder {
-            @JsonProperty("Id")
-            public final String id;
-
-            @JsonCreator
-            public OkResponse(@JsonProperty("Id") String id) {
-                this.id = id;
-            }
-        }
-
-        public static final class UnexpectedResponse extends DefaultHttpStatusHolder {
-            @JsonProperty("Name")
-            public final String name;
-
-            @JsonCreator
-            public UnexpectedResponse(@JsonProperty("Name") String name) {
-                this.name = name;
-            }
-        }
     }
 
     @Test
@@ -243,16 +248,16 @@ public class DockingPointTests {
                 .isEqualTo(expectedResponse.id);
     }
 
+    final class ResponseFromStringArray extends DefaultHttpStatusHolder {
+        public final String[] data;
+
+        public ResponseFromStringArray(String[] data) {
+            this.data = data;
+        }
+    }
+
     @Test
     void call_whenRegisterResponseMapper_shouldReturnExpectedData() throws JsonProcessingException {
-        final class ResponseFromStringArray extends DefaultHttpStatusHolder {
-            public final String[] data;
-
-            ResponseFromStringArray(String[] data) {
-                this.data = data;
-            }
-        }
-
         // arrange
         final String[] expectedResponse = new String[]{"data 1", "data 2"};
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
@@ -279,14 +284,6 @@ public class DockingPointTests {
 
     @Test
     void call_whenRegisterDefaultResponseMapper_shouldReturnExpectedData() throws JsonProcessingException {
-        final class ResponseFromStringArray extends DefaultHttpStatusHolder {
-            public final String[] data;
-
-            ResponseFromStringArray(String[] data) {
-                this.data = data;
-            }
-        }
-
         // arrange
         final String[] expectedResponse = new String[]{"data 1", "data 2"};
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
@@ -314,11 +311,6 @@ public class DockingPointTests {
 
     @Test
     void call_whenRegisterDefaultResponseMapperAndNotExpectedContentType_shouldThrowJsonProcessingException()  {
-        final class ResponseFromInt extends DefaultHttpStatusHolder {
-            ResponseFromInt(int data) {
-            }
-        }
-
         // arrange
         final String[] expectedResponse = new String[]{"data 1", "data 2"};
         final HttpStatus expectedResponseStatus = HttpStatus.OK;
