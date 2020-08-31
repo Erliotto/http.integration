@@ -15,14 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 @RestController
 public class TestDockingPointController {
 
-    static final class StringResponse extends DefaultHttpStatusHolder {
-        public final String data;
-
-        StringResponse(String data) {
-            this.data = data;
-        }
-    }
-
     private final DockingPoint<StringResponse> dockingPoint;
 
     @Autowired
@@ -52,5 +44,13 @@ public class TestDockingPointController {
     @GetMapping(value = "test")
     public String test() {
         return "test content value";
+    }
+
+    private static final class StringResponse extends DefaultHttpStatusHolder {
+        public final String data;
+
+        StringResponse(String data) {
+            this.data = data;
+        }
     }
 }
