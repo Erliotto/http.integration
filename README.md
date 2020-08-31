@@ -4,6 +4,8 @@
 
 This project is just a toy, for production code please use https://github.com/OpenFeign/feign.
 
+### Basic using (springboot)
+
 ```java
 @RestController
 public class TestDockingPointController {
@@ -54,3 +56,20 @@ public class TestDockingPointController {
 }
 ```
 
+### Customization (springboot)
+
+```java
+@Configuration
+public class CustomDockingPointConfig {
+
+    @Bean
+    HttpResultProvider createHttpResultProvider(RestTemplate restTemplate) {
+        return new RestTemplateHttpResultProvider(restTemplate);
+    }
+
+    @Bean
+    RestTemplate createRestTemplate(RestTemplateBuilder restTemplateBuilder) {
+        return restTemplateBuilder.build();
+    }
+}
+```
