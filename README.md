@@ -5,7 +5,6 @@
 This project is just a toy, for production code please use https://github.com/OpenFeign/feign.
 
 ```java
-```
 @RestController
 public class TestDockingPointController {
 
@@ -53,5 +52,5 @@ public class TestDockingPointController {
         }
     }
 }
-
+```
 
